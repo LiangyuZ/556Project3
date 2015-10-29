@@ -1,5 +1,3 @@
-#include "sendfile.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -26,47 +24,29 @@ char* hostname;
 char* filename;
 int portnum = -1;
 
+
 //function declarations
-void printHostName();
+void printInputContents();
 void handleOptions(int argc, char** argv);
 
 
 int main(int argc, char** argv){
-	//printf("the program seems to be working \n");
-	int option = 0;
-	char* hostnameAndPortnum;
-	char* parseStr;
-	
+	handleOptions(argc, argv);
+	printInputContents();
 
 	int sock;
-
-	
-	printf("program running, the following flags are read:\n");
-	//printf("r:%s\n",hostnameAndPortnum);
-	printf("filename:%s\n",filename);
-
-
-	parseStr=strtok(hostnameAndPortnum,":");
-	hostname=parseStr;
-	//printf("parsed values:\n");
-	printHostName();
-	parseStr=strtok(NULL,":");
-	portnum=atoi(parseStr);
-	printf("portnum:%d\n",portnum);
-
-
 	if( (sock=socket(AF_INET, SOCK_DGRAM,0)) < 0 ){
 		perror("cannot create socket");
 		return 0;
 	}
 
-
-
-
 	return 1;
 }
 
 void handleOptions(int argc, char** argv){
+	char* parseStr;
+	char* hostnameAndPortnum;
+	int option = 0;
 	while ((option = getopt(argc,argv,"r:f:")) != -1){
 		switch (option){
 			case 'r': hostnameAndPortnum = optarg; 
@@ -77,10 +57,16 @@ void handleOptions(int argc, char** argv){
 				exit(EXIT_FAILURE);
 		}
 	}
-
+	parseStr=strtok(hostnameAndPortnum,":");
+	hostname=parseStr;
+	parseStr=strtok(NULL,":");
+	portnum=atoi(parseStr);
 	
 }
 
-void printHostName(){
+void printInputContents(){
+	printf("program running, the following flags are read:\n");
+	printf("filename:%s\n",filename);
+	printf("portnum:%d\n",portnum);
 	printf("hostname:%s\n",hostname);
 }
