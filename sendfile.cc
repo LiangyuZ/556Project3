@@ -27,13 +27,15 @@ struct hostent *hp; /* host information */
 struct sockaddr_in servaddr; /* server address */
 int sock;
 struct sockaddr_in myaddr;
+FILE *inputFile; /* File to send*/
+
 
 //function declarations
 void printInputContents();
 void handleOptions(int argc, char** argv);
 int setupSocket();
 int setupServerAddress();
-
+int sendMessage(char *my_message, unsigned int messageLength);
 
 int main(int argc, char** argv){
 	handleOptions(argc, argv);
@@ -44,17 +46,68 @@ int main(int argc, char** argv){
 	printInputContents();
 
 	//setup the socket
-	if(setupSocket()==0){return 0;}
+	if(setupSocket()==0){printf("ERROR SETTING UP SOCKET\n");return 0;}
+
 	//setup the server address
-	if(setupServerAddress()==0){return 0;}
+	if(setupServerAddress()==0){printf("ERROR SETTING UP ADDRESS\n");return 0;}
 
-
-	char *my_messsage = "this is a test message"; 
-	/* send a message to the server */ 
-	if (sendto(fd, my_message, strlen(my_message), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) { 
-		perror("sendto failed"); 
-		return 0; 
+	inputFile = fopen(filename,"r");
+	if(inputFile==NULL){
+		fputs ("File error",stderr);
+		exit(1);
 	}
+
+	//obtain file size:
+	fseek(inputFile,0,SEEK_END);
+	unsigned int filesize = ftell(inputFile);
+	rewind(inputFile);
+
+	//send code
+	
+
+	
+	
+	int maxSendSize = 50000;
+	int readSize=0;
+	int readingPositionInTheInputFile=0;
+	int bytesLeftToRead;
+	bool finishedReading=false;
+	while(!finishedReading){
+		char *sendBuffer = (char*) malloc(50000); //make a buffer of .5 MB to send
+		bytesLeftToRead= filesize - readingPositionInTheInputFile;
+		if(bytesLeftToRead<maxSendSize){
+			readSize=bytesLeftToRead;
+			finishedReading=true;
+		}
+		else{
+			readSize=maxSendSize;
+			readingPositionInTheInputFile+=maxSendSize;
+		}
+		printf("readSize:\n",readSize);
+		int readResult;
+		unsigned int accu=0;
+		while(accu<readSize){
+			readResult = fread(sendBuffer+accu,1,readSize,inputFile);
+			accu+=readResult;
+			printf("readResult:%d, accu:%d, readSize:%d\n",readResult, accu,readSize);
+		}
+		if(readResult!=readSize){
+			printf("ERROR READING FILE\n");
+			return 0;
+		}
+		/* send a message to the server */ 
+		printf("sendBuffer[0]:%c\n",(char)sendBuffer[0]);
+		if(sendMessage(sendBuffer,readSize)==0){printf("ERROR SENDING MESSAGE\n");return 0;}
+		free(sendBuffer);
+	}
+
+	//printf("sendBuffer:%s\n", sendBuffer);
+	
+	fclose(inputFile);
+
+
+	//char *my_message = (char*)"this is a test message";
+	
 
 	return 1;
 }
@@ -82,8 +135,10 @@ void handleOptions(int argc, char** argv){
 
 int setupSocket(){
 	//setting up the socket
+	printf("setting up the socket\n");
 	if( (sock=socket(AF_INET, SOCK_DGRAM,0)) < 0 ){
 		perror("cannot create socket");
+		printf("cannot create socket\n" );
 		return 0;
 	}
 	memset((char *)&myaddr, 0, sizeof(myaddr));
@@ -91,12 +146,16 @@ int setupSocket(){
 	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	myaddr.sin_port=htons(0);
 	if (bind(sock, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) { 
-		perror("bind failed"); return 0; 
+		perror("bind failed"); 
+		printf("%s\n", "bind failed");
+		return 0; 
+
 	}
+	return 1;
 }
 
 int setupServerAddress(){ 
-	
+	printf("setting up the server address\n");
 	/* fill in the server's address and data */ 
 	memset((char*)&servaddr, 0, sizeof(servaddr)); 
 	servaddr.sin_family = AF_INET; 
@@ -104,12 +163,29 @@ int setupServerAddress(){
 	/* look up the address of the server given its name */ 
 	hp = gethostbyname(hostname); 
 	if (!hp) { 
-		fprintf(stderr, "could not obtain address of %s\n", host); 
+		fprintf(stderr, "could not obtain address of %s\n", hostname); 
+		printf("could not obtain address of %s\n", hostname);
 		return 0; 
 	} 
 	/* put the host's address into the server address structure */ 
 	memcpy((void *)&servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
+	return 1;
+}
 
+int sendMessage(char *my_message, unsigned int messageLength){
+	printf("sending message to %s\n", hostname);
+	/*unsigned int accu=0;
+	unsigned int sendResult;
+	while(accu<messageLength){
+		sendResult = sendto(sock, my_message, strlen(my_message), 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+		accu+=sendResult;
+	}*/
+	if (sendto(sock, my_message, strlen(my_message), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) { 
+		perror("sendto failed"); 
+		printf("sendto failed\n");
+		return 0; 
+	}
+	return 1;
 }
 
 void printInputContents(){
@@ -118,3 +194,4 @@ void printInputContents(){
 	printf("portnum:%d\n",portnum);
 	printf("hostname:%s\n",hostname);
 }
+
