@@ -36,6 +36,7 @@ void handleOptions(int argc, char** argv);
 int setupSocket();
 int setupServerAddress();
 int sendMessage(char *my_message, unsigned int messageLength);
+int readfile(char *sendBuffer, unsigned int readSize);
 
 int main(int argc, char** argv){
 	handleOptions(argc, argv);
@@ -84,29 +85,22 @@ int main(int argc, char** argv){
 			readingPositionInTheInputFile+=maxSendSize;
 		}
 		printf("readSize:\n",readSize);
-		int readResult;
-		unsigned int accu=0;
-		while(accu<readSize){
-			readResult = fread(sendBuffer+accu,1,readSize,inputFile);
-			accu+=readResult;
-			printf("readResult:%d, accu:%d, readSize:%d\n",readResult, accu,readSize);
-		}
-		if(readResult!=readSize){
-			printf("ERROR READING FILE\n");
-			return 0;
-		}
-		/* send a message to the server */ 
+		
+		//Read the input file for 'readSize' amount of data and store it in sendBuffer
+		if(readfile(sendBuffer,readSize)==0){printf("ERROR READING FILE\n");return 0;}
+
 		printf("sendBuffer[0]:%c\n",(char)sendBuffer[0]);
+
+		//Send the contents of send buffer to the reciever
 		if(sendMessage(sendBuffer,readSize)==0){printf("ERROR SENDING MESSAGE\n");return 0;}
+		
 		free(sendBuffer);
 	}
 
-	//printf("sendBuffer:%s\n", sendBuffer);
 	
 	fclose(inputFile);
 
 
-	//char *my_message = (char*)"this is a test message";
 	
 
 	return 1;
@@ -172,6 +166,21 @@ int setupServerAddress(){
 	return 1;
 }
 
+int readfile(char *sendBuffer, unsigned int readSize){
+	int readResult;
+	unsigned int accu=0;
+	while(accu<readSize){
+		readResult = fread(sendBuffer+accu,1,readSize,inputFile);
+		accu+=readResult;
+		printf("readResult:%d, accu:%d, readSize:%d\n",readResult, accu,readSize);
+	}
+	if(readResult!=readSize){
+		printf("ERROR READING FILE\n");
+		return 0;
+	}
+	return 1;
+}
+
 int sendMessage(char *my_message, unsigned int messageLength){
 	printf("sending message to %s\n", hostname);
 	/*unsigned int accu=0;
@@ -189,9 +198,9 @@ int sendMessage(char *my_message, unsigned int messageLength){
 }
 
 void printInputContents(){
-	printf("program running, the following flags are read:\n");
+	printf("\nprogram running, the following flags are read:\n");
 	printf("filename:%s\n",filename);
 	printf("portnum:%d\n",portnum);
-	printf("hostname:%s\n",hostname);
+	printf("hostname:%s\n\n",hostname);
 }
 
