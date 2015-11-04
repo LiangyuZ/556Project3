@@ -1,7 +1,7 @@
 #include <map>
 #include <string>
 #include <iterator>
- 
+#include <iostream>
 int main()
 {
     std::map<std::string, int> mapOfWords;

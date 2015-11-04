@@ -9,6 +9,10 @@
 #include <netdb.h>
 #include <sys/time.h>
 
+#include <map>
+#include <string>
+#include <iterator>
+#include <iostream>
 
 /*
 
