@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   //####initialization
   int recvSize;
   // allocate a memory buffer in the heap
-  unsigned int buf_size = 100000;
+  unsigned int buf_size = 50000;
   char *buf = (char *)malloc(buf_size);	//1MB size
   if (!buf)
     {
