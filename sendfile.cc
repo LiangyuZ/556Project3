@@ -24,10 +24,10 @@ ststr - parse
 
 
 //variable declarations
-char* hostname;
+char* ip;
 char* filename;
 int portnum = -1;
-struct hostent *hp; /* host information */ 
+//struct hostent *hp; /* host information */ 
 struct sockaddr_in servaddr; /* server address */
 int sock;
 struct sockaddr_in myaddr;
@@ -112,11 +112,11 @@ int main(int argc, char** argv){
 
 void handleOptions(int argc, char** argv){
 	char* parseStr;
-	char* hostnameAndPortnum;
+	char* IPAndPortnum;
 	int option = 0;
 	while ((option = getopt(argc,argv,"r:f:")) != -1){
 		switch (option){
-			case 'r': hostnameAndPortnum = optarg; 
+			case 'r': IPAndPortnum = optarg; 
 				break;
 			case 'f': filename = optarg;
 				break;
@@ -124,8 +124,13 @@ void handleOptions(int argc, char** argv){
 				exit(EXIT_FAILURE);
 		}
 	}
-	parseStr=strtok(hostnameAndPortnum,":");
-	hostname=parseStr;
+	parseStr=strtok(IPAndPortnum,":");
+	//hostname=parseStr;
+	//int *intIP = (int*) atoi(parseStr);
+	//ip=(char*) malloc(sizeof intIP);
+	//memcpy(ip, intIP, sizeof intIP);
+	ip=parseStr;
+	
 	parseStr=strtok(NULL,":");
 	portnum=atoi(parseStr);
 	
@@ -159,14 +164,16 @@ int setupServerAddress(){
 	servaddr.sin_family = AF_INET; 
 	servaddr.sin_port = htons(portnum); 
 	/* look up the address of the server given its name */ 
-	hp = gethostbyname(hostname); 
-	if (!hp) { 
-		fprintf(stderr, "could not obtain address of %s\n", hostname); 
-		printf("could not obtain address of %s\n", hostname);
+	//hp = gethostbyname(hostname);
+	//hp=ip; 
+	/*if (!hp) { 
+		fprintf(stderr, "could not obtain address of %s\n", ip); 
+		printf("could not obtain address of %s\n", ip);
 		return 0; 
-	} 
+	} */
 	/* put the host's address into the server address structure */ 
-	memcpy((void *)&servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
+	//memcpy((void *)&servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
+	memcpy((void *)&servaddr.sin_addr, ip, sizeof ip);
 	return 1;
 }
 
@@ -186,7 +193,7 @@ int readfile(char *sendBuffer, unsigned int readSize){
 }
 
 int sendMessage(char *my_message, unsigned int messageLength){
-	printf("sending message to %s\n", hostname);
+	printf("sending message to %s\n", ip);
 	/*unsigned int accu=0;
 	unsigned int sendResult;
 	while(accu<messageLength){
@@ -205,6 +212,6 @@ void printInputContents(){
 	printf("\nprogram running, the following flags are read:\n");
 	printf("filename:%s\n",filename);
 	printf("portnum:%d\n",portnum);
-	printf("hostname:%s\n\n",hostname);
+	printf("ip:%s\n\n",ip);
 }
 
