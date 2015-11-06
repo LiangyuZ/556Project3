@@ -18,6 +18,7 @@
 
 #define BUFLEN 2048
 #define MSGS 5	/* number of messages to send */
+#define SENDPORT 18001
 
 int main(void)
 {
@@ -50,7 +51,7 @@ int main(void)
 
 	memset((char *) &remaddr, 0, sizeof(remaddr));
 	remaddr.sin_family = AF_INET;
-	remaddr.sin_port = htons(SERVICE_PORT);
+	remaddr.sin_port = htons(SENDPORT);
 	if (inet_aton(server, &remaddr.sin_addr)==0) {
 		fprintf(stderr, "inet_aton() failed\n");
 		exit(1);
@@ -59,7 +60,7 @@ int main(void)
 	/* now let's send the messages */
 
 	for (i=0; i < MSGS; i++) {
-		printf("Sending packet %d to %s port %d\n", i, server, SERVICE_PORT);
+		printf("Sending packet %d to %s port %d\n", i, server, SENDPORT);
 		sprintf(buf, "This is packet %d", i);
 		if (sendto(fd, buf, strlen(buf), 0, (struct sockaddr *)&remaddr, slen)==-1) {
 			perror("sendto");

@@ -16,6 +16,7 @@
 #include "port.h"
 
 #define BUFSIZE 2048
+#define RECVPORT 18001
 
 int
 main(int argc, char **argv)
