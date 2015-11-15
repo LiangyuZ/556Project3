@@ -26,7 +26,7 @@ ststr - parse
 //variable declarations
 char* ip;
 char* filename;
-int portnum = -1;
+unsigned short portnum = -1;
 //struct hostent *hp; /* host information */ 
 struct sockaddr_in servaddr; /* server address */
 int sock;
@@ -173,7 +173,12 @@ int setupServerAddress(){
 	} */
 	/* put the host's address into the server address structure */ 
 	//memcpy((void *)&servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
-	memcpy((void *)&servaddr.sin_addr, ip, sizeof ip);
+	if (inet_aton(ip, &servaddr.sin_addr)==0) {
+		fprintf(stderr, "inet_aton() failed\n");
+		exit(1);
+	}
+
+	//memcpy((void *)&servaddr.sin_addr, ip, sizeof ip);
 	return 1;
 }
 
