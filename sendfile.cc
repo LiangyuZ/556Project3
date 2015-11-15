@@ -35,6 +35,8 @@ FILE *inputFile; /* File to send*/
 
 
 //function declarations
+void initConnection(int argc, char** argv);
+void threadSend();
 void printInputContents();
 void handleOptions(int argc, char** argv);
 int setupSocket();
@@ -43,19 +45,27 @@ int sendMessage(char *my_message, unsigned int messageLength);
 int readfile(char *sendBuffer, unsigned int readSize);
 
 int main(int argc, char** argv){
+	//initialize the network connection
+	initConnection(argc, argv);
+	//send the file to the receiver
+	threadSend();
+	//closes the file after the file is sent
+	fclose(inputFile);
+	//terminate the program
+	return 0;
+}
+
+void initConnection(int argc, char** argv){
 	handleOptions(argc, argv);
-
-	//struct hostent *host = gethostbyname(argv[1]);
-  	//server_addr = *(unsigned int *) host->h_addr_list[0];
-
+	//print read contents
 	printInputContents();
-
 	//setup the socket
-	if(setupSocket()==0){printf("ERROR SETTING UP SOCKET\n");return 0;}
-
+	if(setupSocket()==0){printf("ERROR SETTING UP SOCKET\n");exit (1);}
 	//setup the server address
-	if(setupServerAddress()==0){printf("ERROR SETTING UP ADDRESS\n");return 0;}
+	if(setupServerAddress()==0){printf("ERROR SETTING UP ADDRESS\n");exit (1);}
+}
 
+void threadSend(){
 	inputFile = fopen(filename,"r");
 	if(inputFile==NULL){
 		fputs ("File error",stderr);
@@ -91,23 +101,15 @@ int main(int argc, char** argv){
 		printf("readSize:\n",readSize);
 		
 		//Read the input file for 'readSize' amount of data and store it in sendBuffer
-		if(readfile(sendBuffer,readSize)==0){printf("ERROR READING FILE\n");return 0;}
+		if(readfile(sendBuffer,readSize)==0){printf("ERROR READING FILE\n");exit (1);}
 
 		printf("sendBuffer[0]:%c\n",(char)sendBuffer[0]);
 
 		//Send the contents of send buffer to the reciever
-		if(sendMessage(sendBuffer,readSize)==0){printf("ERROR SENDING MESSAGE\n");return 0;}
+		if(sendMessage(sendBuffer,readSize)==0){printf("ERROR SENDING MESSAGE\n");exit (1);}
 		
 		free(sendBuffer);
 	}
-
-	
-	fclose(inputFile);
-
-
-	
-
-	return 1;
 }
 
 void handleOptions(int argc, char** argv){
