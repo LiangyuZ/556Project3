@@ -17,9 +17,9 @@
 
 /*syntax:  sendfile -r 127.0.0.1:18000 -f testfile.txt*/
 
-////////////////////////
-//  GLOBAL VARIABLES  //
-////////////////////////
+////////////////////////																							//////////////////
+//  GLOBAL VARIABLES  //																							//////////////////
+////////////////////////																							//////////////////
 
 //File i/o
 char* filename;
@@ -33,9 +33,9 @@ int sock;
 struct sockaddr_in myaddr;
 
 
-/////////////////////////////
-//  FUNCTION DECLARATIONS  //
-/////////////////////////////
+/////////////////////////////																						//////////////////
+//  FUNCTION DECLARATIONS  //																						//////////////////
+/////////////////////////////																						//////////////////
 
 //Sending Data/Filename functions
 void threadSend();
@@ -50,15 +50,15 @@ int setupSocket();
 int setupServerAddress();
 
 //File i/o
-int sendMessage(char *my_message, unsigned int messageLength);
-int readfile(char *sendBuffer, unsigned int readSize);
+void sendMessage(char *my_message, unsigned int messageLength);
+void readfile(char *sendBuffer, unsigned int readSize);
 
 //Helper
 void printInputContents();
-
-/////////////////////
-//  MAIN FUNCTION  //
-/////////////////////
+ 
+/////////////////////																								//////////////////
+//  MAIN FUNCTION  //																								//////////////////
+/////////////////////																								//////////////////
 //ZMAIN
 int main(int argc, char** argv){
 	//initialize the network connection
@@ -75,61 +75,75 @@ int main(int argc, char** argv){
 	//terminate the program
 	return 0;
 }
+ 
+///////////////////////////////////////////																			//////////////////
+//              SEND THREAD              //																			//////////////////
+///////////////////////////////////////////																			//////////////////
+//ZSEND
 
+//Global Variables for this section:
+int packetSize = 50000;
+int readingPositionInTheInputFile=0;
+int bytesLeftToRead;
+bool finishedReading=false;
+unsigned int filesize;
 
+//Helper functions for this section:
+int getPacketSize();
 
+//Code for this section:
 void threadSend(){
+	//open the input file
 	inputFile = fopen(filename,"r");
 	if(inputFile==NULL){
-		fputs ("File error",stderr);
-		exit(1);
+		fputs ("File error",stderr);exit(1);
 	}
 
 	//obtain file size:
 	fseek(inputFile,0,SEEK_END);
-	unsigned int filesize = ftell(inputFile);
+	filesize = ftell(inputFile);
 	rewind(inputFile);
 
-	//send code
-	
 
-	
-	
-	int maxSendSize = 50000;
 	int readSize=0;
-	int readingPositionInTheInputFile=0;
-	int bytesLeftToRead;
-	bool finishedReading=false;
+
 	while(!finishedReading){
 		char *sendBuffer = (char*) malloc(50000); //make a buffer of .5 MB to send
-		bytesLeftToRead= filesize - readingPositionInTheInputFile;
-		if(bytesLeftToRead<maxSendSize){
-			readSize=bytesLeftToRead;
-			finishedReading=true;
-		}
-		else{
-			readSize=maxSendSize;
-			readingPositionInTheInputFile+=maxSendSize;
-		}
+		
+		readSize=getPacketSize();
 		printf("readSize:\n",readSize);
 		
 		//Read the input file for 'readSize' amount of data and store it in sendBuffer
-		if(readfile(sendBuffer,readSize)==0){printf("ERROR READING FILE\n");exit (1);}
+		readfile(sendBuffer,readSize);
 
 		printf("sendBuffer[0]:%c\n",(char)sendBuffer[0]);
 
 		//Send the contents of send buffer to the reciever
-		if(sendMessage(sendBuffer,readSize)==0){printf("ERROR SENDING MESSAGE\n");exit (1);}
+		sendMessage(sendBuffer,readSize);
 		
 		free(sendBuffer);
 	}
 }
+int getPacketSize(){
+	int readSize=0;
+	bytesLeftToRead= filesize - readingPositionInTheInputFile;
+	if(bytesLeftToRead<packetSize){
+		readSize=bytesLeftToRead;
+		finishedReading=true;
+	}
+	else{
+		readSize=packetSize;
+		readingPositionInTheInputFile+=packetSize;
+	}
+	return readSize;
+}
 void threadRecv(){
 	printf("threadRecv executed.\n");
 }
-///////////////////////////////////////////////////////
-//  NETWORK CONNECTION AND INITIALIZATION FUNCTIONS  //
-///////////////////////////////////////////////////////
+ 
+///////////////////////////////////////////////////////																//////////////////
+//  NETWORK CONNECTION AND INITIALIZATION FUNCTIONS  //																//////////////////
+///////////////////////////////////////////////////////																//////////////////
 //ZNETINIT
 void initConnection(int argc, char** argv){
 	handleOptions(argc, argv);
@@ -197,11 +211,12 @@ int setupServerAddress(){
 	}
 	return 1;
 }
-//////////////////////////
-//  FILE I/O FUNCTIONS  //
-//////////////////////////
+
+//////////////////////////																							//////////////////
+//  FILE I/O FUNCTIONS  //																							//////////////////
+//////////////////////////																							//////////////////
 //ZFILEIO
-int readfile(char *sendBuffer, unsigned int readSize){
+void readfile(char *sendBuffer, unsigned int readSize){
 	int readResult;
 	unsigned int accu=0;
 	while(accu<readSize){
@@ -211,30 +226,22 @@ int readfile(char *sendBuffer, unsigned int readSize){
 	}
 	if(readResult!=readSize){
 		printf("ERROR READING FILE\n");
-		return 0;
+		exit(1);
 	}
-	return 1;
 }
 
-int sendMessage(char *my_message, unsigned int messageLength){
+void sendMessage(char *my_message, unsigned int messageLength){
 	printf("sending message to %s\n", ip);
-	/*unsigned int accu=0;
-	unsigned int sendResult;
-	while(accu<messageLength){
-		sendResult = sendto(sock, my_message, strlen(my_message), 0, (struct sockaddr *)&servaddr, sizeof(servaddr));
-		accu+=sendResult;
-	}*/
 	if (sendto(sock, my_message, strlen(my_message), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) { 
 		perror("sendto failed"); 
 		printf("sendto failed\n");
-		return 0; 
+		exit(1);
 	}
-	return 1;
 }
 
-////////////////////////
-//  HELPER FUNCTIONS  //
-////////////////////////
+////////////////////////																							//////////////////
+//  HELPER FUNCTIONS  //																							//////////////////
+////////////////////////																							//////////////////
 //ZHELP
 void printInputContents(){
 	printf("\nprogram running, the following flags are read:\n");
