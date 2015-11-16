@@ -13,57 +13,70 @@
 #include <string>
 #include <iterator>
 #include <iostream>
+#include <thread>         // std::thread
 
-/*
+/*syntax:  sendfile -r 127.0.0.1:18000 -f testfile.txt*/
 
-syntax sendfile -r localhost:18000 -f testfile.txt
-getopt
-ststr - parse
+////////////////////////
+//  GLOBAL VARIABLES  //
+////////////////////////
 
-*/
-
-
-//variable declarations
-char* ip;
+//File i/o
 char* filename;
-unsigned short portnum = -1;
-//struct hostent *hp; /* host information */ 
+FILE *inputFile; /* File to send*/
+
+//Network Variables
+char* ip;
+unsigned short portnum = -1; 
 struct sockaddr_in servaddr; /* server address */
 int sock;
 struct sockaddr_in myaddr;
-FILE *inputFile; /* File to send*/
 
 
-//function declarations
-void initConnection(int argc, char** argv);
+/////////////////////////////
+//  FUNCTION DECLARATIONS  //
+/////////////////////////////
+
+//Sending Data/Filename functions
 void threadSend();
-void printInputContents();
+
+//Receiving ack functions
+void threadRecv();
+
+//Network Connection and Initialization
+void initConnection(int argc, char** argv);
 void handleOptions(int argc, char** argv);
 int setupSocket();
 int setupServerAddress();
+
+//File i/o
 int sendMessage(char *my_message, unsigned int messageLength);
 int readfile(char *sendBuffer, unsigned int readSize);
 
+//Helper
+void printInputContents();
+
+/////////////////////
+//  MAIN FUNCTION  //
+/////////////////////
+//ZMAIN
 int main(int argc, char** argv){
 	//initialize the network connection
 	initConnection(argc, argv);
 	//send the file to the receiver
-	threadSend();
+	//threadSend();
+	std::thread first (threadSend);
+	std::thread second (threadRecv);
+	first.join();
+	second.join();
+
 	//closes the file after the file is sent
 	fclose(inputFile);
 	//terminate the program
 	return 0;
 }
 
-void initConnection(int argc, char** argv){
-	handleOptions(argc, argv);
-	//print read contents
-	printInputContents();
-	//setup the socket
-	if(setupSocket()==0){printf("ERROR SETTING UP SOCKET\n");exit (1);}
-	//setup the server address
-	if(setupServerAddress()==0){printf("ERROR SETTING UP ADDRESS\n");exit (1);}
-}
+
 
 void threadSend(){
 	inputFile = fopen(filename,"r");
@@ -111,7 +124,22 @@ void threadSend(){
 		free(sendBuffer);
 	}
 }
-
+void threadRecv(){
+	printf("threadRecv executed.\n");
+}
+///////////////////////////////////////////////////////
+//  NETWORK CONNECTION AND INITIALIZATION FUNCTIONS  //
+///////////////////////////////////////////////////////
+//ZNETINIT
+void initConnection(int argc, char** argv){
+	handleOptions(argc, argv);
+	//print read contents
+	printInputContents();
+	//setup the socket
+	if(setupSocket()==0){printf("ERROR SETTING UP SOCKET\n");exit (1);}
+	//setup the server address
+	if(setupServerAddress()==0){printf("ERROR SETTING UP ADDRESS\n");exit (1);}
+}
 void handleOptions(int argc, char** argv){
 	char* parseStr;
 	char* IPAndPortnum;
@@ -127,12 +155,7 @@ void handleOptions(int argc, char** argv){
 		}
 	}
 	parseStr=strtok(IPAndPortnum,":");
-	//hostname=parseStr;
-	//int *intIP = (int*) atoi(parseStr);
-	//ip=(char*) malloc(sizeof intIP);
-	//memcpy(ip, intIP, sizeof intIP);
 	ip=parseStr;
-	
 	parseStr=strtok(NULL,":");
 	portnum=atoi(parseStr);
 	
@@ -165,25 +188,19 @@ int setupServerAddress(){
 	memset((char*)&servaddr, 0, sizeof(servaddr)); 
 	servaddr.sin_family = AF_INET; 
 	servaddr.sin_port = htons(portnum); 
-	/* look up the address of the server given its name */ 
-	//hp = gethostbyname(hostname);
-	//hp=ip; 
-	/*if (!hp) { 
-		fprintf(stderr, "could not obtain address of %s\n", ip); 
-		printf("could not obtain address of %s\n", ip);
-		return 0; 
-	} */
+
 	/* put the host's address into the server address structure */ 
 	//memcpy((void *)&servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
 	if (inet_aton(ip, &servaddr.sin_addr)==0) {
 		fprintf(stderr, "inet_aton() failed\n");
 		exit(1);
 	}
-
-	//memcpy((void *)&servaddr.sin_addr, ip, sizeof ip);
 	return 1;
 }
-
+//////////////////////////
+//  FILE I/O FUNCTIONS  //
+//////////////////////////
+//ZFILEIO
 int readfile(char *sendBuffer, unsigned int readSize){
 	int readResult;
 	unsigned int accu=0;
@@ -215,6 +232,10 @@ int sendMessage(char *my_message, unsigned int messageLength){
 	return 1;
 }
 
+////////////////////////
+//  HELPER FUNCTIONS  //
+////////////////////////
+//ZHELP
 void printInputContents(){
 	printf("\nprogram running, the following flags are read:\n");
 	printf("filename:%s\n",filename);
