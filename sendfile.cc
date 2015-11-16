@@ -90,6 +90,7 @@ unsigned int filesize;
 
 //Helper functions for this section:
 int getPacketSize();
+int readNextPacket(char *buffer);
 
 //Code for this section:
 void threadSend(){
@@ -106,23 +107,26 @@ void threadSend(){
 
 
 	int readSize=0;
-
 	while(!finishedReading){
-		char *sendBuffer = (char*) malloc(50000); //make a buffer of .5 MB to send
-		
-		readSize=getPacketSize();
-		printf("readSize:\n",readSize);
-		
-		//Read the input file for 'readSize' amount of data and store it in sendBuffer
-		readfile(sendBuffer,readSize);
-
-		printf("sendBuffer[0]:%c\n",(char)sendBuffer[0]);
-
+		//make a buffer of .05 MB to send
+		char *sendBuffer = (char*) malloc(50000); 
+		// Read the Next packet and put it in sendbuffer
+		readSize=readNextPacket(sendBuffer);
 		//Send the contents of send buffer to the reciever
 		sendMessage(sendBuffer,readSize);
-		
+		//print the contents for testing
+		printf("sendBuffer[0]:%c\n",(char)sendBuffer[0]);
+		//free the memory
 		free(sendBuffer);
 	}
+}
+
+//Helper functions
+int readNextPacket(char *buffer){
+	int readSize=getPacketSize();
+	//Read the input file for 'readSize' amount of data and store it in buffer
+	readfile(buffer,readSize);
+	return readSize;
 }
 int getPacketSize(){
 	int readSize=0;
