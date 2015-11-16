@@ -21,6 +21,10 @@
 //  GLOBAL VARIABLES  //																							//////////////////
 ////////////////////////																							//////////////////
 
+//Send and Receive
+std::map<unsigned int, char*> dataMap;
+std::map<unsigned int, char*> ackMap;
+
 //File i/o
 char* filename;
 FILE *inputFile; /* File to send*/
@@ -87,6 +91,8 @@ int readingPositionInTheInputFile=0;
 int bytesLeftToRead;
 bool finishedReading=false;
 unsigned int filesize;
+
+
 
 //Helper functions for this section:
 int getPacketSize();
