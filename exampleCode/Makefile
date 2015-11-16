@@ -1,4 +1,4 @@
-CC = g++
+CC = g++ -std=gnu++11
 COPTS = -Wall -Wno-deprecated
 LKOPTS = 
 
@@ -16,6 +16,8 @@ ex2: mapExample2.cc
 ex3: mapExample3.cc
 	$(CC) $(DEFS) $(CFLAGS) $(LIB) -o ex3 mapExample3.cc
 
+threads: threads.cc
+	$(CC) $(DEFS) $(CFLAGS) $(LIB) -o threads threads.cc
 
 
 clean:
