@@ -1,0 +1,29 @@
+unsigned short checksum(char *buf, unsigned short size)
+{
+    register long sum=0;
+
+    for(int i=0; i<size; i+=sizeof(unsigned short))
+    {
+        if(i==size-1)
+            break;
+        sum += *(unsigned short *)buf;
+        buf += sizeof(unsigned short);
+
+        if (sum & 0xFFFF0000)
+        {
+            sum &= 0xFFFF;
+            sum++;
+        }
+    }
+    return ~(sum & 0xFFFF);
+}
+
+boolean dropPkt(char *buf, unsigned short size)
+{
+    unsigned short pkt_checksum = ntohs(*(unsigned short *)(buf + sizeof(byte)* 5));
+
+    if (pkt_checksum != checksum(buf, size))
+          return 1;
+    else
+          return 0;
+}
